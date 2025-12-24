@@ -1,145 +1,91 @@
-import { useEffect, useState, useCallback } from 'react';
-import client from '../api/client';
-import RestaurantCard from '../components/RestaurantCard';
-import { Search, SlidersHorizontal, Loader2 } from 'lucide-react';
-import debounce from 'lodash.debounce'; // Run: npm install lodash.debounce
-
-// Filters match your Backend Schema enum: ['food_delivery_and_dining', 'groceries', 'food_delivery']
-const FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'food_delivery', label: 'Delivery' },
-  { id: 'food_delivery_and_dining', label: 'Dining' },
-  { id: 'groceries', label: 'Groceries' },
-];
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight, ShoppingBag, Utensils, Truck } from 'lucide-react';
 
 export default function Home() {
-  const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeType, setActiveType] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const navigate = useNavigate();
 
-  // Core Fetch Function
-  const fetchRestaurants = async (currentPage, type, search, append = false) => {
-    try {
-      setLoading(true);
-      const params = { page: currentPage, limit: 12 };
-      
-      // Only append valid filters supported by backend
-      if (type !== 'all') params.type = type;
-      if (search) params.search = search;
-
-      const { data } = await client.get('/restaurants', { params });
-      
-      if (data.success) {
-        setRestaurants(prev => append ? [...prev, ...data.data] : data.data);
-        setTotalPages(data.totalPages);
-      }
-    } catch (err) {
-      console.error("Fetch Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Debounced Search Handler to prevent API spam
-  const debouncedSearch = useCallback(
-    debounce((query) => {
-      setPage(1); // Reset to page 1 on new search
-      fetchRestaurants(1, activeType, query, false);
-    }, 500),
-    [activeType]
-  );
-
-  // Initial Load & Filter Change
-  useEffect(() => {
-    setPage(1);
-    fetchRestaurants(1, activeType, searchTerm, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeType]);
-
-  const handleSearchChange = (e) => {
-    const val = e.target.value;
-    setSearchTerm(val);
-    debouncedSearch(val);
-  };
-
-  const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchRestaurants(nextPage, activeType, searchTerm, true);
+  // Navigation handlers
+  const handleExplore = (type) => {
+    // Navigate to a listing page with the correct filter
+    // We will reuse the same 'restaurants' route but with query params
+    navigate(`/restaurants?type=${type}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* 1. HEADER & SEARCH */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 px-4 py-4 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center">
-          {/* Search Input */}
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input 
-              type="text" 
-              placeholder="Search by restaurant name..."
-              className="w-full pl-12 pr-4 py-3 bg-gray-100 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all font-medium"
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
+    <div className="min-h-screen bg-white">
+      {/* 1. HERO SECTION */}
+      <section className="relative bg-gray-900 text-white py-20 px-4 overflow-hidden">
+        {/* Background Decorative Circles */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto no-scrollbar pb-1">
-             <div className="flex items-center gap-2 text-gray-500 pr-2 border-r border-gray-200 shrink-0">
-               <SlidersHorizontal size={18} />
-             </div>
-             {FILTERS.map(f => (
-               <button
-                 key={f.id}
-                 onClick={() => setActiveType(f.id)}
-                 className={`
-                   px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap border transition-all
-                   ${activeType === f.id 
-                     ? 'bg-gray-900 text-white border-gray-900' 
-                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}
-                 `}
-               >
-                 {f.label}
-               </button>
-             ))}
-          </div>
+        <div className="relative max-w-7xl mx-auto text-center z-10">
+          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight leading-tight">
+            Order. Eat. <span className="text-orange-500">Repeat.</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto font-light">
+            Your favorite restaurants and groceries, delivered to your door or ready for dining out.
+          </p>
         </div>
-      </div>
+      </section>
 
-      {/* 2. GRID CONTENT */}
-      <div className="max-w-7xl mx-auto px-4 mt-8">
-        {restaurants.length === 0 && !loading ? (
-          <div className="text-center py-20">
-            <h3 className="text-xl font-bold text-gray-900">No restaurants found</h3>
-            <p className="text-gray-500">Try adjusting your filters or search term.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {restaurants.map((rest) => (
-              <RestaurantCard key={rest._id} restaurant={rest} />
-            ))}
-          </div>
-        )}
-
-        {/* 3. LOAD MORE / LOADING STATE */}
-        <div className="mt-12 text-center">
-          {loading && <Loader2 className="animate-spin mx-auto text-orange-600" size={32} />}
+      {/* 2. CATEGORY CARDS SECTION */}
+      <section className="max-w-7xl mx-auto px-4 -mt-16 pb-20 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {!loading && page < totalPages && (
+          {/* Card 1: Food Delivery */}
+          <div className="group bg-white rounded-3xl p-8 shadow-xl border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center flex flex-col items-center">
+            <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Truck size={40} className="text-orange-600" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Food Delivery</h2>
+            <p className="text-gray-500 mb-8 font-medium leading-relaxed">
+              Order form your favorite restaurants and get it delivered fast.
+            </p>
             <button 
-              onClick={handleLoadMore}
-              className="px-8 py-3 bg-white border border-gray-300 font-bold text-gray-700 rounded-full hover:bg-gray-50 hover:shadow-md transition-all"
+              onClick={() => handleExplore('food_delivery')}
+              className="mt-auto px-8 py-3 bg-gray-900 text-white font-bold rounded-full hover:bg-orange-600 transition-colors flex items-center gap-2 group-hover:gap-3"
             >
-              Load More Restaurants
+              Explore Now <ArrowRight size={18} />
             </button>
-          )}
+          </div>
+
+          {/* Card 2: Eat Out (Dining) */}
+          <div className="group bg-white rounded-3xl p-8 shadow-xl border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center flex flex-col items-center">
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Utensils size={40} className="text-blue-600" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Eat Out</h2>
+            <p className="text-gray-500 mb-8 font-medium leading-relaxed">
+              Book a table and enjoy dining at the best places in town.
+            </p>
+            <button 
+              onClick={() => handleExplore('food_delivery_and_dining')}
+              className="mt-auto px-8 py-3 bg-gray-900 text-white font-bold rounded-full hover:bg-blue-600 transition-colors flex items-center gap-2 group-hover:gap-3"
+            >
+              Explore Now <ArrowRight size={18} />
+            </button>
+          </div>
+
+          {/* Card 3: Groceries */}
+          <div className="group bg-white rounded-3xl p-8 shadow-xl border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center flex flex-col items-center">
+            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <ShoppingBag size={40} className="text-green-600" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-900 mb-3">Groceries</h2>
+            <p className="text-gray-500 mb-8 font-medium leading-relaxed">
+              Daily essentials and fresh produce delivered in minutes.
+            </p>
+            <button 
+              onClick={() => handleExplore('groceries')}
+              className="mt-auto px-8 py-3 bg-gray-900 text-white font-bold rounded-full hover:bg-green-600 transition-colors flex items-center gap-2 group-hover:gap-3"
+            >
+              Explore Now <ArrowRight size={18} />
+            </button>
+          </div>
+
         </div>
-      </div>
+      </section>
     </div>
   );
 }
