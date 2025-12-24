@@ -1,33 +1,29 @@
 import { useEffect, useState } from 'react';
 import client from '../api/client';
 import RestaurantCard from '../components/RestaurantCard';
-import { Search, Filter, ShoppingBag } from 'lucide-react';
+import { Filter, SlidersHorizontal, Search } from 'lucide-react';
 
-// Static Categories for Filter Demo
 const CATEGORIES = [
-  { id: 'all', label: 'All', icon: '🍽️' },
-  { id: 'Pizza', label: 'Pizza', icon: '🍕' },
-  { id: 'Burger', label: 'Burger', icon: '🍔' },
-  { id: 'Biryani', label: 'Biryani', icon: '🍲' },
-  { id: 'Chinese', label: 'Chinese', icon: '🥡' },
-  { id: 'Dessert', label: 'Dessert', icon: '🍰' },
-  { id: 'Healthy', label: 'Healthy', icon: '🥗' },
+  { id: 'all', label: 'All' },
+  { id: 'Pizza', label: '🍕 Pizza' },
+  { id: 'Burger', label: '🍔 Burger' },
+  { id: 'Biryani', label: '🍲 Biryani' },
+  { id: 'Chinese', label: '🥢 Chinese' },
+  { id: 'Dessert', label: '🍰 Dessert' },
+  { id: 'Healthy', label: '🥗 Healthy' },
 ];
 
 export default function Home() {
   const [restaurants, setRestaurants] = useState([]);
-  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
         const { data } = await client.get('/restaurants?type=food_delivery');
-        const list = data.data || [];
-        setRestaurants(list);
-        setFilteredRestaurants(list);
+        setRestaurants(data.data || []);
       } catch (err) {
         console.error("Fetch Error:", err);
       } finally {
@@ -37,48 +33,31 @@ export default function Home() {
     fetchRestaurants();
   }, []);
 
-  // Handle Search & Filter
-  useEffect(() => {
-    let result = restaurants;
-
-    // 1. Filter by Search
-    if (searchTerm) {
-      result = result.filter(r => 
-        r.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.cuisineTypes.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    // 2. Filter by Category
-    if (activeCategory !== 'all') {
-      result = result.filter(r => 
-        r.cuisineTypes.some(c => c.toLowerCase().includes(activeCategory.toLowerCase()))
-      );
-    }
-
-    setFilteredRestaurants(result);
-  }, [searchTerm, activeCategory, restaurants]);
+  // Filter Logic
+  const filteredList = restaurants.filter(r => {
+    const matchesSearch = r.restaurantName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = activeCategory === 'all' || r.cuisineTypes.some(c => c.includes(activeCategory));
+    return matchesSearch && matchesCategory;
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pb-20">
       
-      {/* HERO SECTION */}
-      <div className="bg-gradient-to-r from-orange-600 to-red-600 pb-20 pt-10 px-4 shadow-lg">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            Craving something delicious?
+      {/* 1. HERO SECTION */}
+      <div className="bg-primary pt-8 pb-16 px-4">
+        <div className="max-w-4xl mx-auto text-center text-white">
+          <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">
+            Craving something?
           </h1>
-          <p className="text-white/80 text-lg mb-8">Order from the best restaurants near you</p>
+          <p className="text-orange-100 text-lg mb-8">Order from the best restaurants near you</p>
           
-          {/* Search Bar */}
-          <div className="relative max-w-2xl mx-auto">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
+          {/* Mobile Search (Visible only on small screens) */}
+          <div className="md:hidden relative">
+            <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
+            <input 
               type="text"
-              className="block w-full pl-11 pr-4 py-4 rounded-full border-none shadow-2xl focus:ring-2 focus:ring-orange-300 bg-white text-gray-900 placeholder-gray-400 text-lg"
-              placeholder="Search for 'Biryani', 'Pizza', or restaurant name..."
+              placeholder="Search restaurants..."
+              className="w-full pl-12 pr-4 py-3 rounded-full text-gray-900 font-medium focus:outline-none shadow-lg"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -86,75 +65,56 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MAIN CONTENT CONTAINER */}
-      <div className="max-w-7xl mx-auto px-4 -mt-10 relative z-10 pb-20">
-        
-        {/* CATEGORY FILTERS (Horizontal Scroll) */}
-        <div className="bg-white rounded-2xl shadow-md p-4 mb-8 flex gap-4 overflow-x-auto no-scrollbar items-center">
-          <div className="flex items-center gap-2 text-gray-400 pr-4 border-r border-gray-100">
-            <Filter size={18} />
-            <span className="text-sm font-semibold uppercase tracking-wider">Filters</span>
+      {/* 2. STICKY FILTER BAR */}
+      <div className="sticky top-20 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 py-3 -mt-6">
+        <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-2 text-gray-500 pr-4 border-r border-gray-300">
+            <SlidersHorizontal size={18} />
+            <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
           </div>
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 border ${
-                activeCategory === cat.id 
-                  ? 'bg-orange-100 border-orange-200 text-orange-700 font-bold shadow-sm' 
-                  : 'bg-white border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600'
-              }`}
+              className={`
+                px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border
+                ${activeCategory === cat.id 
+                  ? 'bg-gray-900 text-white border-gray-900 shadow-lg transform scale-105' 
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}
+              `}
             >
-              <span className="text-lg">{cat.icon}</span>
-              <span className="text-sm">{cat.label}</span>
+              {cat.label}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* RESULTS HEADER */}
+      {/* 3. RESTAURANT GRID */}
+      <div className="max-w-7xl mx-auto px-4 mt-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">
-            {activeCategory === 'all' ? 'All Restaurants' : `Best ${activeCategory} Places`}
+          <h2 className="text-xl font-bold text-gray-900">
+            {activeCategory === 'all' ? 'Top Restaurants' : `${activeCategory} Places`}
           </h2>
-          <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border shadow-sm">
-            {filteredRestaurants.length} results
+          <span className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
+            {filteredList.length} results
           </span>
         </div>
 
-        {/* RESTAURANT GRID */}
         {loading ? (
-          // Loading Skeleton
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="bg-white h-72 rounded-2xl shadow-sm animate-pulse flex flex-col overflow-hidden">
-                <div className="h-40 bg-gray-200 w-full" />
-                <div className="p-4 flex-1 space-y-3">
-                  <div className="h-6 bg-gray-200 rounded w-3/4" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  <div className="h-10 bg-gray-200 rounded mt-auto" />
-                </div>
-              </div>
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white h-72 rounded-2xl animate-pulse" />
             ))}
           </div>
-        ) : filteredRestaurants.length === 0 ? (
-          // Empty State
-          <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-dashed border-gray-300">
-            <div className="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ShoppingBag size={32} className="text-orange-400" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">No Restaurants Found</h3>
-            <p className="text-gray-500">Try changing your search term or filter.</p>
-            <button 
-              onClick={() => {setSearchTerm(""); setActiveCategory("all");}}
-              className="mt-4 text-orange-600 font-semibold hover:underline"
-            >
-              Clear all filters
-            </button>
+        ) : filteredList.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">🥗</div>
+            <h3 className="text-lg font-bold text-gray-900">No restaurants found</h3>
+            <p className="text-gray-500">Try changing your filters.</p>
           </div>
         ) : (
-          // Data Grid
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredRestaurants.map((rest) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredList.map((rest) => (
               <RestaurantCard key={rest._id} restaurant={rest} />
             ))}
           </div>
