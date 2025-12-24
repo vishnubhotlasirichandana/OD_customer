@@ -1,13 +1,16 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import { ShoppingBag, MapPin, Search, LogOut, User as UserIcon } from 'lucide-react';
+import { ShoppingBag, MapPin, Search, LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { cart } = useCart();
-
-  // Safety check for user name
+  const location = useLocation();
+  
+  // Hide search in Navbar if we are on the Home page (prevents duplication)
+  const isHomePage = location.pathname === '/';
+  
   const userName = user?.fullName ? user.fullName.split(' ')[0] : 'User';
 
   return (
@@ -23,25 +26,27 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-2 text-sm text-gray-600 hover:text-orange-600 cursor-pointer transition-colors bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
             <MapPin size={16} className="text-orange-500" />
             <span className="font-bold truncate max-w-[150px]">
-              Hyderabad
+              London, UK
             </span>
           </div>
         </div>
 
-        {/* CENTER: Search Bar (Desktop) */}
-        <div className="hidden md:block flex-1 max-w-lg mx-4">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text"
-              placeholder="Search for restaurants..."
-              className="w-full pl-11 pr-4 py-2.5 bg-gray-100 border-transparent focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-orange-200 rounded-xl text-sm transition-all outline-none font-medium"
-            />
+        {/* CENTER: Search Bar (Hidden on Home Page) */}
+        {!isHomePage && (
+          <div className="hidden md:block flex-1 max-w-lg mx-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="text"
+                placeholder="Search for restaurants..."
+                className="w-full pl-11 pr-4 py-2.5 bg-gray-100 border-transparent focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-orange-200 rounded-xl text-sm transition-all outline-none font-medium"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* RIGHT: Actions */}
-        <div className="flex items-center gap-3 md:gap-6">
+        <div className="flex items-center gap-3 md:gap-6 ml-auto">
           <Link to="/cart" className="relative p-2 hover:bg-gray-50 rounded-full transition-colors group">
             <ShoppingBag size={24} className="text-gray-700 group-hover:text-orange-600 transition-colors" />
             {cart?.length > 0 && (
