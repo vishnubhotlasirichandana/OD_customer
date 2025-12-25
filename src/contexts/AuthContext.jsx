@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   // Check if user is logged in on page load
   const checkAuth = async () => {
     try {
-      // UPDATED: Endpoint changed to match backend route '/api/users/profile'
+     
       const { data } = await client.get('/users/profile');
       if (data.success) {
         setUser(data.data);
