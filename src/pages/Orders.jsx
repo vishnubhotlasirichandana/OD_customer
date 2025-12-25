@@ -6,7 +6,8 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    client.get('/orders/user/my-orders')
+    // UPDATED: Endpoint changed to match backend route '/api/orders/my-orders'
+    client.get('/orders/my-orders')
       .then(res => setOrders(res.data.data))
       .catch(console.error);
   }, []);

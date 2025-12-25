@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import client from '../api/client'; // <--- UPDATED THIS LINE
+import client from '../api/client';
 
 const AuthContext = createContext();
 
@@ -10,7 +10,8 @@ export const AuthProvider = ({ children }) => {
   // Check if user is logged in on page load
   const checkAuth = async () => {
     try {
-      const { data } = await client.get('/user/profile');
+      // UPDATED: Endpoint changed to match backend route '/api/users/profile'
+      const { data } = await client.get('/users/profile');
       if (data.success) {
         setUser(data.data);
       }

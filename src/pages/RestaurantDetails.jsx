@@ -21,7 +21,8 @@ export default function RestaurantDetails() {
         setLoading(true);
         const [restRes, menuRes] = await Promise.all([
           client.get(`/restaurants/${id}`),
-          client.get(`/menuItems/restaurant/${id}?isAvailable=true`)
+          // UPDATED: Endpoint changed to match backend route '/api/menu-items/...'
+          client.get(`/menu-items/restaurant/${id}?isAvailable=true`)
         ]);
 
         if (restRes.data.success) setRestaurant(restRes.data.data);
